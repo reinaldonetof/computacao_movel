@@ -1,0 +1,32 @@
+[23:06:38]: mosquitto version 1.6.9 starting
+[23:06:38]: Config loaded from /etc/mosquitto/mosquitto.conf.
+[23:06:38]: Opening ipv4 listen socket on port 1883.
+[23:06:38]: Opening ipv6 listen socket on port 1883.
+[23:06:39]: New connection from 45.181.231.202 on port 1883.
+[23:06:39]: New connection from 168.181.252.14 on port 1883.
+[23:06:40]: New client connected from 45.181.231.202 as testelgoC1d (p2, c1, k60, u'username').
+[23:06:40]: New client connected from 168.181.252.14 as testejVp8Vj (p2, c1, k60, u'username').
+[23:11:05]: Socket error on client testelgoC1d, disconnecting.
+[23:11:18]: New connection from 45.181.231.202 on port 1883.
+[23:11:18]: New client connected from 45.181.231.202 as 7895xtWnte (p2, c1, k60, u'username').
+[23:22:21]: New connection from 45.181.231.202 on port 1883.
+[23:22:21]: Client 7895xtWnte already connected, closing old connection.
+[23:22:21]: New client connected from 45.181.231.202 as 7895xtWnte (p2, c1, k60, u'username').
+[23:24:22]: New connection from 45.181.231.202 on port 1883.
+[23:24:23]: Client 7895xtWnte already connected, closing old connection.
+[23:24:23]: New client connected from 45.181.231.202 as 7895xtWnte (p2, c1, k60, u'username').
+[23:26:33]: Socket error on client testejVp8Vj, disconnecting.
+[23:33:24]: New connection from 45.181.231.202 on port 1883.
+[23:33:24]: New client connected from 45.181.231.202 as 78951rzC5k (p2, c1, k60, u'username').
+[23:33:24]: New connection from 45.181.231.202 on port 1883.
+[23:33:25]: Client 7895xtWnte already connected, closing old connection.
+[23:33:25]: New client connected from 45.181.231.202 as 7895xtWnte (p2, c1, k60, u'username').
+[23:33:42]: Socket error on client 7895xtWnte, disconnecting.
+[23:33:48]: New connection from 45.181.231.202 on port 1883.
+[23:33:49]: New client connected from 45.181.231.202 as 7895Bh1vOL (p2, c1, k60, u'username').
+[23:36:39]: Saving in-memory database to /var/lib/mosquitto/mosquitto.db.
+[23:38:26]: Socket error on client 7895Bh1vOL, disconnecting.
+[23:38:45]: New connection from 45.181.231.202 on port 1883.
+[23:38:45]: New client connected from 45.181.231.202 as 7895hjTuXN (p2, c1, k60, u'username').
+[23:39:21]: Socket error on client 78951rzC5k, disconnecting.
+[23:40:24]: New connection from 45.181.231.202 on port 1883.
