@@ -24,6 +24,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.espertech.esper.client.EPServiceProvider;
+import com.espertech.esper.client.EPServiceProviderManager;
+import com.espertech.esper.client.EPStatement;
+import com.espertech.esper.client.EventBean;
+import com.espertech.esper.client.UpdateListener;
+import com.movel.protetivovitima.events.EventsLatLong;
+import com.movel.protetivovitima.events.ExternalLatLong;
+import com.movel.protetivovitima.events.InternalLatLong;
+import com.movel.protetivovitima.utils.DiffDistance.*;
+
 import br.ufma.lsdi.cddl.CDDL;
 import br.ufma.lsdi.cddl.ConnectionFactory;
 import br.ufma.lsdi.cddl.listeners.IConnectionListener;
@@ -38,18 +48,17 @@ import br.ufma.lsdi.cddl.pubsub.SubscriberFactory;
 
 public class MainActivity extends AppCompatActivity {
 
+    EPServiceProvider engine;
     CDDL cddl;
-    private TextView messageTextView;
-    private TextView messageLatitude;
-    private TextView messageLongitude;
+
     private EditText editTextView;
+    private TextView messageTextView;
+    private TextView sosText;
     private View subscribeButton;
+    private View sosButton;
     private ConnectionImpl con;
     private ConnectionImpl external_con;
-    private Double latitude = 0.0;
-    private Double longitude = 0.0;
-    private Double external_latitude = 0.0;
-    private Double external_longitude = 0.0;
+    private boolean clickedButton = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,15 +70,16 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
         }
 
+        startCEP();
         subscribeButton.setOnClickListener(clickListener);
     }
 
     private void setViews() {
         editTextView = findViewById(R.id.editText);
         subscribeButton = findViewById(R.id.subscribeButton);
+        sosButton = findViewById(R.id.sosButton);
         messageTextView = findViewById(R.id.messageTexView);
-        messageLatitude = findViewById(R.id.messageLatitude);
-        messageLongitude = findViewById(R.id.messageLongitude);
+        sosText = findViewById(R.id.sosText);
     }
 
     private void initCDDL(String clientId) {
@@ -77,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
         con = ConnectionFactory.createConnection();
         con.setClientId(clientId);
         con.setHost(host);
-        con.addConnectionListener(connectionListener);
         con.connect();
 
         String host_external = "dev.correia.xyz";
@@ -103,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         publisher.publish(message);
     }
 
-    // Vitima
+    // Subscribe into External Broker
     private void subscribeExternalMessage(String clientId) {
         Subscriber sub = SubscriberFactory.createSubscriber();
         sub.addConnection(external_con);
@@ -113,43 +122,88 @@ public class MainActivity extends AppCompatActivity {
         sub.setSubscriberListener(new ISubscriberListener() {
             @Override
             public void onMessageArrived(Message message) {
-                if (message.getServiceName().equals("my_service")) {
-                    Log.d("_MAIN_EXTERNAL", ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" + message.toString());
-
-                }
                 if (message.getServiceName().equals("location_external")) {
                     String[] arrOfPoints = message.getServiceValue()[0].toString().split(";");
-                    external_latitude = Double.parseDouble(arrOfPoints[0]);
-                    external_longitude = Double.parseDouble(arrOfPoints[1]);
-                    messageLatitude.setText(external_latitude.toString());
-                    messageLongitude.setText(external_longitude.toString());
+                    double external_latitude = Double.parseDouble(arrOfPoints[0]);
+                    double external_longitude = Double.parseDouble(arrOfPoints[1]);
+//                    ExternalBroke.setLocations(external_latitude, external_longitude);
+                    engine.getEPRuntime().sendEvent(new ExternalLatLong(external_latitude, external_longitude));
+
                 }
                 Log.d("_MAIN_EXTERNAL", ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" + message);
             }
         });
     }
 
-    // Vitima e Agressor
+    // Subscribe into Local Broker
     private void subscribeMessage() {
         Subscriber sub = SubscriberFactory.createSubscriber();
         sub.addConnection(cddl.getConnection());
-//        sub.subscribeServiceByName("my_service");
         sub.subscribeServiceByName("Location");
         sub.setSubscriberListener(new ISubscriberListener() {
             @Override
             public void onMessageArrived(Message message) {
-//                if (message.getServiceName().equals("my_service")) {
-//                    Log.d("_MAIN", "+++" + message.getSourceLocationLatitude());
-//                }
                 if (message.getServiceName().equals("Location")) {
-                    Log.d("_INTERNAL", message.toString());
-                    latitude = message.getSourceLocationLatitude();
-                    longitude = message.getSourceLocationLongitude();
+                    double latitude = message.getSourceLocationLatitude();
+                    double longitude = message.getSourceLocationLongitude();
+//                    LocalBroke.setLocations(latitude, longitude);
+                    engine.getEPRuntime().sendEvent(new InternalLatLong(latitude, longitude));
                 }
-                Log.d("_MAIN", ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" + message);
             }
         });
     }
+
+    private void startCEP() {
+        engine = EPServiceProviderManager.getDefaultProvider();
+        engine.getEPAdministrator().getConfiguration().addEventType(InternalLatLong.class);
+        engine.getEPAdministrator().getConfiguration().addEventType(ExternalLatLong.class);
+
+        String getLastEvents = "insert into LocationUpdate select * from InternalLatLong.std:lastevent() as internal, ExternalLatLong.std:lastevent() as external";
+        engine.getEPAdministrator().createEPL(getLastEvents);
+
+        String calculateDistance = "insert into Distancia select com.movel.protetivovitima.utils.DiffDistance.difference(internal, external) as distancia from LocationUpdate";
+        engine.getEPAdministrator().createEPL(calculateDistance);
+
+        String selectDistance = "select * from Distancia where distancia < 1";
+        EPStatement statement4 = engine.getEPAdministrator().createEPL(selectDistance);
+
+        statement4.addListener(new UpdateListener() {
+            @Override
+            public void update(EventBean[] newData, EventBean[] oldData) {
+                Log.d(">>CEP:", newData[0].get("distancia").toString());
+                int visibility = sosButton.getVisibility();
+                Log.d(">>CEP Visibility:", Integer.toString(visibility));
+                sosText.setText(R.string.SOS);
+                if(visibility != View.VISIBLE) {
+                    sosButton.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        String distanceAbove = "select * from Distancia where distancia > 1";
+        EPStatement statement5 = engine.getEPAdministrator().createEPL(distanceAbove);
+
+        statement5.addListener(new UpdateListener() {
+            @Override
+            public void update(EventBean[] newData, EventBean[] oldData) {
+                int visibility = sosButton.getVisibility();
+                sosText.setText("");
+                if(visibility == View.VISIBLE) {
+                    sosButton.setVisibility(View.GONE);
+                }
+            }
+        });
+    }
+
+    private View.OnClickListener clickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            String et = editTextView.getText().toString();
+            initCDDL(et);
+            subscribeMessage();
+            subscribeExternalMessage(et);
+        }
+    };
 
     private IConnectionListener connectionListenerExternal = new IConnectionListener() {
         @Override
@@ -172,39 +226,6 @@ public class MainActivity extends AppCompatActivity {
             messageTextView.setText("Uma disconexão normal ocorreu.");
         }
 
-    };
-
-    private IConnectionListener connectionListener = new IConnectionListener() {
-        @Override
-        public void onConnectionEstablished() {
-            messageTextView.setText("Conexão estabelecida.");
-        }
-
-        @Override
-        public void onConnectionEstablishmentFailed() {
-            messageTextView.setText("Falha na conexão.");
-        }
-
-        @Override
-        public void onConnectionLost() {
-            messageTextView.setText("Conexão perdida.");
-        }
-
-        @Override
-        public void onDisconnectedNormally() {
-            messageTextView.setText("Uma disconexão normal ocorreu.");
-        }
-
-    };
-
-    private View.OnClickListener clickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            String et = editTextView.getText().toString();
-            initCDDL(et);
-            subscribeMessage();
-            subscribeExternalMessage(et);
-        }
     };
 
     @Override

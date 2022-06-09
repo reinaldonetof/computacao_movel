@@ -2,4 +2,5 @@
     <string name="app_name">Protetivo Vitima</string>
     <string name="send">Send</string>
     <string name="subscribe">Subscribe</string>
+    <string name="SOS">S.O.S \n Send info to authorities</string>
 </resources>
