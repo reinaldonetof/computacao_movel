@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     CDDL cddl;
     private TextView messageTextView;
     private EditText editTextView;
-    private View subscribeButton;
     private View sendButton;
     private ConnectionImpl con;
     private ConnectionImpl external_con;
@@ -57,32 +56,17 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
 
-//        if(!checkPermission()){
-//            requestPermission();
-//        }
-
-        // Este codigo comentado envolve o uso seguro do CDDL. Estes métodos não devem ser chamados de forma sequencial.
-        // Caso alguma equipe deseje usar o CDDL no modo seguro me procure que eu explico melhor (andre.cardoso@lsdi.ufma.br)
-//        SecurityService securityService = new SecurityService(getApplicationContext());
-//        securityService.generateCSR("andre.cardoso","LSDi","UFMA","SLZ","MA","BR","andre.cardoso@lsdi.ufma.br");
-//        securityService.grantWritePermissionByCDDLTopic("andre.cardoso@lsdi.ufma.br", SecurityService.ALL_TOPICS);
-//        securityService.grantReadPermissionByCDDLTopic("andre.cardoso@lsdi.ufma.br", SecurityService.ALL_TOPICS);
-//        setCertificates("rootCA.crt", "client.crt", "ca_lsdi");
-
-        //subscribeButton.setOnClickListener(clickListener);
         sendButton.setOnClickListener(clickListener);
     }
 
     private void setViews() {
         editTextView = findViewById(R.id.editText);
-        subscribeButton = findViewById(R.id.subscribeButton);
         messageTextView = findViewById(R.id.messageTexView);
         sendButton = findViewById(R.id.sendButton);
     }
 
     private void initCDDL(String clientId) {
         String host = CDDL.startMicroBroker();
-        //String host = CDDL.startSecureMicroBroker(getApplicationContext(), true)
         con = ConnectionFactory.createConnection();
         con.setClientId(clientId); //criado manualmente ou automaticamente?
         con.setHost(host);
@@ -95,22 +79,12 @@ public class MainActivity extends AppCompatActivity {
         external_con.setHost(host_external);
         external_con.addConnectionListener(connectionListenerExternal);
         external_con.connect();
-//        con.secureConnect(getApplicationContext());
         cddl = CDDL.getInstance();
         cddl.setConnection(con);
         cddl.setContext(this);
         cddl.startService();
         cddl.startLocationSensor();
         cddl.startCommunicationTechnology(CDDL.INTERNAL_TECHNOLOGY_ID);
-    }
-
-    private void publishMessage() {
-        Publisher publisher = PublisherFactory.createPublisher();
-        publisher.addConnection(cddl.getConnection());
-        MyMessage message = new MyMessage();
-        message.setServiceName("my_service");
-        message.setServiceByteArray("Valor");
-        publisher.publish(message);
     }
 
     private void publishExternal(Double lat, Double lon) {
@@ -149,14 +123,10 @@ public class MainActivity extends AppCompatActivity {
     private void subscribeMessage() {
         Subscriber sub = SubscriberFactory.createSubscriber();
         sub.addConnection(cddl.getConnection());
-//        sub.subscribeServiceByName("my_service");
         sub.subscribeServiceByName("Location");
         sub.setSubscriberListener(new ISubscriberListener() {
             @Override
             public void onMessageArrived(Message message) {
-//                if (message.getServiceName().equals("my_service")) {
-//                    Log.d("_MAIN", "+++" + message.getSourceLocationLatitude());
-//                }
                 if (message.getServiceName().equals("Location")) {
                     latitude = message.getSourceLocationLatitude();
                     longitude = message.getSourceLocationLongitude();
@@ -256,9 +226,6 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 intent.addCategory("android.intent.category.DEFAULT");
                 intent.setData(Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
-//                intent.putExtra(caFileName, caFileName);
-//                intent.putExtra(certFileName, certFileName);
-//                intent.putExtra(caAlias, caAlias);
                 startActivityForResult(intent, 2296);
             } catch (Exception e) {
                 Intent intent = new Intent();
@@ -306,19 +273,6 @@ public class MainActivity extends AppCompatActivity {
             if (SDK_INT >= Build.VERSION_CODES.R) {
                 if (Environment.isExternalStorageManager()) {
                     Toast.makeText(this, "All permissions are granted, you may import certificates!", Toast.LENGTH_SHORT).show();
-
-//                    try{
-//                        SecurityService securityService = new SecurityService(getApplicationContext());
-//                        String caFileName = data.getStringExtra("caFileName");
-//                        String certFileName = data.getStringExtra("certFileName");
-//                        String caAlias = data.getStringExtra("caAlias");
-//
-//                        securityService.setCaCertificate(caFileName, caAlias);
-//                        securityService.setCertificate(certFileName);
-//                    }
-//                    catch (Exception e){
-//                        e.printStackTrace();
-//                    }
                 } else {
                     Toast.makeText(this, "Allow permission for storage access!", Toast.LENGTH_SHORT).show();
                 }

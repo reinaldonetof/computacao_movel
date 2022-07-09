@@ -126,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
                     String[] arrOfPoints = message.getServiceValue()[0].toString().split(";");
                     double external_latitude = Double.parseDouble(arrOfPoints[0]);
                     double external_longitude = Double.parseDouble(arrOfPoints[1]);
-//                    ExternalBroke.setLocations(external_latitude, external_longitude);
                     engine.getEPRuntime().sendEvent(new ExternalLatLong(external_latitude, external_longitude));
 
                 }
@@ -146,7 +145,6 @@ public class MainActivity extends AppCompatActivity {
                 if (message.getServiceName().equals("Location")) {
                     double latitude = message.getSourceLocationLatitude();
                     double longitude = message.getSourceLocationLongitude();
-//                    LocalBroke.setLocations(latitude, longitude);
                     engine.getEPRuntime().sendEvent(new InternalLatLong(latitude, longitude));
                 }
             }
@@ -164,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         String calculateDistance = "insert into Distancia select com.movel.protetivovitima.utils.DiffDistance.difference(internal, external) as distancia from LocationUpdate";
         engine.getEPAdministrator().createEPL(calculateDistance);
 
-        String selectDistance = "select * from Distancia where distancia < 1";
+        String selectDistance = "select * from Distancia where distancia <= 0.5";
         EPStatement statement4 = engine.getEPAdministrator().createEPL(selectDistance);
 
         statement4.addListener(new UpdateListener() {
@@ -180,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        String distanceAbove = "select * from Distancia where distancia > 1";
+        String distanceAbove = "select * from Distancia where distancia > 0.5";
         EPStatement statement5 = engine.getEPAdministrator().createEPL(distanceAbove);
 
         statement5.addListener(new UpdateListener() {
@@ -189,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                 int visibility = sosButton.getVisibility();
                 sosText.setText("");
                 if(visibility == View.VISIBLE) {
-                    sosButton.setVisibility(View.GONE);
+                    sosButton.setVisibility(View.INVISIBLE);
                 }
             }
         });
@@ -254,9 +252,6 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 intent.addCategory("android.intent.category.DEFAULT");
                 intent.setData(Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
-//                intent.putExtra(caFileName, caFileName);
-//                intent.putExtra(certFileName, certFileName);
-//                intent.putExtra(caAlias, caAlias);
                 startActivityForResult(intent, 2296);
             } catch (Exception e) {
                 Intent intent = new Intent();
@@ -291,18 +286,6 @@ public class MainActivity extends AppCompatActivity {
                 if (Environment.isExternalStorageManager()) {
                     Toast.makeText(this, "All permissions are granted, you may import certificates!", Toast.LENGTH_SHORT).show();
 
-//                    try{
-//                        SecurityService securityService = new SecurityService(getApplicationContext());
-//                        String caFileName = data.getStringExtra("caFileName");
-//                        String certFileName = data.getStringExtra("certFileName");
-//                        String caAlias = data.getStringExtra("caAlias");
-//
-//                        securityService.setCaCertificate(caFileName, caAlias);
-//                        securityService.setCertificate(certFileName);
-//                    }
-//                    catch (Exception e){
-//                        e.printStackTrace();
-//                    }
                 } else {
                     Toast.makeText(this, "Allow permission for storage access!", Toast.LENGTH_SHORT).show();
                 }

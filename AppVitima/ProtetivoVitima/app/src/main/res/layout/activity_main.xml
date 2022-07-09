@@ -45,5 +45,5 @@
         android:backgroundTint="#EA0505"
         android:textColor="@color/white"
         android:textSize="24dp"
-        android:visibility="gone"/>
+        android:visibility="invisible"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
