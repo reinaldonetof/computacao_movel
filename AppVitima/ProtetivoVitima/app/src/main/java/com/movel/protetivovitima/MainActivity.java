@@ -58,7 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private View sosButton;
     private ConnectionImpl con;
     private ConnectionImpl external_con;
-    private boolean clickedButton = false;
+    private Double internal_latitude;
+    private Double internal_longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         startCEP();
         subscribeButton.setOnClickListener(clickListener);
+        sosButton.setOnClickListener(publishSos);
     }
 
     private void setViews() {
@@ -145,6 +147,8 @@ public class MainActivity extends AppCompatActivity {
                 if (message.getServiceName().equals("Location")) {
                     double latitude = message.getSourceLocationLatitude();
                     double longitude = message.getSourceLocationLongitude();
+                    internal_latitude = latitude;
+                    internal_longitude = longitude;
                     engine.getEPRuntime().sendEvent(new InternalLatLong(latitude, longitude));
                 }
             }
@@ -192,6 +196,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private View.OnClickListener publishSos = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+           publishExternal(internal_latitude, internal_longitude);
+        }
+    };
 
     private View.OnClickListener clickListener = new View.OnClickListener() {
         @Override
